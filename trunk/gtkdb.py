@@ -9,6 +9,7 @@ import pygtk
 pygtk.require('2.0')
 import gtk
 import dialogs
+import gtksourceview, pango
 
 class PyGTKDb(gtk.Window, bdb.Bdb):
     ui_string = """<ui>
@@ -128,30 +129,30 @@ class PyGTKDb(gtk.Window, bdb.Bdb):
         vpane.add2(swin)
         swin.show()
 
-        self.minibreak = gtk.Image()
-        self.minibreak.set_from_file("minibreak.xpm")
-        self.minibreak.show()
-        ls = gtk.ListStore(gtk.gdk.Pixbuf, str, str)
-        self.filedisp = gtk.TreeView(ls)
-        titles = ['break', 'lineno', 'line']
-        cell = gtk.CellRendererPixbuf()
-        tvc = gtk.TreeViewColumn(None, cell, pixbuf=0)
-        tvc.set_min_width(14)
-        tvc.set_widget(self.minibreak)
-        self.filedisp.append_column(tvc)
-        cell = gtk.CellRendererText()
-        cell.set_property('xalign', 1.0)
-        tvc = gtk.TreeViewColumn(titles[1], cell, text=1)
-        self.filedisp.append_column(tvc)
-        cell = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn(titles[2], cell, text=2)
-        self.filedisp.append_column(tvc)
-        self.minibreak = self.minibreak.get_pixbuf()
-        selection = self.filedisp.get_selection()
-        selection.set_mode(gtk.SELECTION_BROWSE)
-        selection.connect("changed", self.update_selection)
-        self.filedisp.connect('row-activated', lambda t,p,c: self.do_break())
-        self.filedisp.set_border_width(2)
+        lm = gtksourceview.SourceLanguagesManager()
+
+        buffer = gtksourceview.SourceBuffer()
+
+        buffer.set_data('languages-manager', lm)
+        
+        language = lm.get_language_from_mime_type("text/x-python")
+        buffer.set_highlight(True)
+        buffer.set_language(language)
+        
+        self.filedisp = gtksourceview.SourceView(buffer)
+        font_desc = pango.FontDescription('monospace 10')
+
+        if font_desc:
+            self.filedisp.modify_font(font_desc)
+
+
+        self.filedisp.set_auto_indent(True)
+        self.filedisp.set_show_line_numbers(True)
+        #~ text.set_show_line_markers(True)
+        #text.set_tabs_width(4)
+        #~ text.connect("grab-focus", self.grab_focus_cb)
+        
+        
         self.filedisp.set_size_request(600, 200)
         swin.add(self.filedisp)
         self.filedisp.show()
@@ -307,25 +308,33 @@ class PyGTKDb(gtk.Window, bdb.Bdb):
     def update_code_listing(self):
         frame = self.curframe
         newfile = frame.f_code.co_filename
+        buffer = self.filedisp.get_buffer()
+        
         if newfile != self.filename:
             lines = linecache.getlines(newfile)
             self.filename = newfile
             self.blockupdate = 1
-            model = self.filedisp.get_model()
-            model.clear()
+            
+            s = "".join(lines)
+            buffer.set_text(s)
+            print lines
             breaks = self.get_file_breaks(newfile)
-            for line in range(len(lines)):
-                if line+1 in breaks:
-                    model.append([self.minibreak, line+1,
-                                  lines[line].rstrip()])
-                else:
-                    model.append([None, line+1, lines[line].rstrip()])
+            #~ for line in range(len(lines)):
+                #~ if line+1 in breaks:
+                    #~ model.append([self.minibreak, line+1,
+                                  #~ lines[line].rstrip()])
+                #~ else:
+                    #~ model.append([None, line+1, lines[line].rstrip()])
             self.blockupdate = 0
         self.selected = frame.f_lineno
         lineno = self.selected
         if newfile != '<string>':
-            self.filedisp.scroll_to_cell(lineno - 1, None, True, 1.0, 0.0)
-            self.filedisp.get_selection().select_path(lineno - 1)
+            start = buffer.get_iter_at_line(lineno - 1)
+            end = start.copy()
+            end.forward_to_line_end()
+            buffer.select_range(start, end)
+            self.filedisp.scroll_to_iter(start, 0.0)
+            
         return
     def do_next(self, _b=None):
         self.set_next(self.curframe)

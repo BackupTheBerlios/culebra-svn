@@ -125,8 +125,10 @@ if __name__ == '__main__':
     import sys, os
     if not sys.argv[1:]:
         print "usage: gtkprof.py scriptfile [args ...]"
-        sys.exit(2)
-    filename = sys.argv[1]
+        #~ sys.exit(2)
+        filename = "grad.py"
+    else:
+        filename = sys.argv[1]
     del sys.argv[0]
     sys.path.insert(0, os.path.dirname(filename))
 

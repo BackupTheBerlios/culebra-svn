@@ -1,4 +1,4 @@
-ï»¿#!/usr/bin/env python
+#!/usr/bin/env python
 
 # This is based on pygtk2 examples and idle
 
@@ -15,6 +15,9 @@ import gnomevfs
 import words
 
 BLOCK_SIZE = 2048
+RESPONSE_FORWARD = 0
+RESPONSE_BACKWARD = 1
+
 
 newcode = """import pygtk
 pygtk.require('2.0')
@@ -163,6 +166,8 @@ class EditWindow(gtk.Window):
         self.browser_menu.append(refresh_item)
         refresh_item.show()
         refresh_item.connect("activate", self.refresh_browser)
+        self.search_string = None
+        self.last_search_iter = None
         return
     
     def refresh_browser(self, item):
@@ -361,7 +366,7 @@ class EditWindow(gtk.Window):
             b.place_cursor(iter)
             t.grab_focus()
 
-        len
+        #~ len
 
     def insert_at_cursor_cb(self, textbuffer, iter, text, length):
         
@@ -523,6 +528,7 @@ class EditWindow(gtk.Window):
         uri = gnomevfs.URI(path)
 
         mime_type = gnomevfs.get_mime_type(path) # needs ASCII filename, not URI
+        print mime_type
 
         if mime_type:
             language = manager.get_language_from_mime_type(mime_type)
@@ -637,12 +643,12 @@ class EditWindow(gtk.Window):
             ('EditClear', gtk.STOCK_REMOVE, 'C_lear', None, None,
              self.edit_clear),
             ('EditFind', gtk.STOCK_FIND, None, None, None, self.edit_find),
-            ('EditFindNext', None, 'Find _Next', None, None,
+            ('EditFindNext', None, 'Find _Next', "F3", None,
              self.edit_find_next),
             ('View', None, "_View"),
             ('ViewConsole', None, '_View Console', None, None, self.view_console),
             ('Run', None, "_Run"),
-            ('Execute', gtk.STOCK_EXECUTE, None, None, None, self.run_script),
+            ('Execute', gtk.STOCK_EXECUTE, None, "F5", None, self.run_script),
             ('ClearConsole', gtk.STOCK_CLEAR, 'Clear _Console', None, None, self.clear_console),
             ]
         self.ag = gtk.ActionGroup('edit')
@@ -807,15 +813,75 @@ class EditWindow(gtk.Window):
         return
 
     # I'll implement these later
-    def edit_find(self, mi): pass
-    def edit_find_next(self, mi): pass
+    
+    def search(self, search_string, iter = None):
+        
+        f, buffer, text, model = self.get_current()
+        
+        if iter is None:
+            start = buffer.get_start_iter()
+        else:
+            start = iter
+
+        i = 0
+        if search_string:
+            self.search_string = search_string
+            res = start.forward_search(search_string, gtk.TEXT_SEARCH_TEXT_ONLY)
+            if res:
+                match_start, match_end = res
+                buffer.place_cursor(match_start)
+                buffer.select_range(match_start, match_end)
+                text.scroll_to_iter(match_start, 0.0)
+                self.last_search_iter = match_end
+                #~ print res
+            else:
+                self.search_string = None
+                dialog = gtk.MessageDialog(view,
+                                           gtk.DIALOG_DESTROY_WITH_PARENT,
+                                           gtk.MESSAGE_INFO,
+                                           gtk.BUTTONS_OK,
+                                           "%s was not found!" % search_string)
+        
+                dialog.connect("response", lambda x,y: dialog.destroy())
+    
+                dialog.run()
+    
+    def edit_find(self, mi): 
+        search_text = gtk.Entry()
+        dialog = gtk.Dialog("Search", self,
+                            gtk.DIALOG_DESTROY_WITH_PARENT,
+                            (gtk.STOCK_FIND, RESPONSE_FORWARD,
+                             gtk.STOCK_CANCEL, gtk.RESPONSE_NONE))
+        dialog.vbox.pack_end(search_text, True, True, 0)
+        
+        search_text.show()
+        search_text.grab_focus()
+        dialog.show_all()
+        response_id = dialog.run()
+        
+        if response_id != RESPONSE_FORWARD:
+            dialog.destroy()
+            return
+
+        #~ start, end = dialog.buffer.get_bounds()
+        search_string = search_text.get_text()
+
+        #~ print "Searching for `%s'\n" % search_string
+
+        self.search(search_string)
+
+        dialog.destroy()
+        
+    def edit_find_next(self, mi):
+        self.search(self.search_string, self.last_search_iter)
+    
     def help_about(self, mi):
         dlg = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT,
                                 gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
-                                "Copyright (C)\n" \
-                                "1998 James Henstridge\n" \
-                                "2004 John Finlay\n" \
-                                "This program is covered by the GPL>=2")
+                                """Copyright (C)
+                                2005 Fernando San Martín Woerner
+                                
+                                This program is covered by the GPL>=2""")
         dlg.run()
         dlg.hide()
         return

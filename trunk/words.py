@@ -66,9 +66,10 @@ def text_wordlist(text):
     wl = [x for x in wl if x != '']
     
     return wl
+    
 if __name__ == "__main__":
 
     b = gtk.TextBuffer()
-    b.set_text("veo un marciano sentado en el ala de un vuelo de taca en un dia como el de hoy")
+    
     print text_wordlist("veo un marciano sentado en el ala de un vuelo de taca en un dia como el de hoy")
     
