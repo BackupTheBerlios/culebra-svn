@@ -10,6 +10,8 @@ b =  gtk.Button("Click")
 
 w.add(b)
 
+a = 1
+
 b.connect('clicked', click)
 
 w.show_all()

@@ -814,7 +814,7 @@ class EditWindow(gtk.Window):
 
     # I'll implement these later
     
-    def search(self, search_string, iter = None):
+    def _search(self, search_string, iter = None):
         
         f, buffer, text, model = self.get_current()
         
@@ -836,41 +836,29 @@ class EditWindow(gtk.Window):
                 #~ print res
             else:
                 self.search_string = None
-                dialog = gtk.MessageDialog(view,
-                                           gtk.DIALOG_DESTROY_WITH_PARENT,
-                                           gtk.MESSAGE_INFO,
-                                           gtk.BUTTONS_OK,
-                                           "%s was not found!" % search_string)
-        
-                dialog.connect("response", lambda x,y: dialog.destroy())
-    
-                dialog.run()
+                self.last_search_iter = None
     
     def edit_find(self, mi): 
+        def dialog_response_callback(dialog, response_id):
+            if response_id == gtk.RESPONSE_CLOSE:
+                dialog.destroy()
+                return
+            self._search(search_text.get_text(), self.last_search_iter)
+        f, buffer, text, model = self.get_current()
         search_text = gtk.Entry()
+        s = buffer.get_selection_bounds()
+        if len(s) > 0:
+            search_text.set_text(buffer.get_slice(s[0], s[1]))
         dialog = gtk.Dialog("Search", self,
                             gtk.DIALOG_DESTROY_WITH_PARENT,
                             (gtk.STOCK_FIND, RESPONSE_FORWARD,
-                             gtk.STOCK_CANCEL, gtk.RESPONSE_NONE))
+                             gtk.STOCK_CLOSE, gtk.RESPONSE_CLOSE))
         dialog.vbox.pack_end(search_text, True, True, 0)
-        
+        dialog.connect("response", dialog_response_callback)
         search_text.show()
         search_text.grab_focus()
         dialog.show_all()
         response_id = dialog.run()
-        
-        if response_id != RESPONSE_FORWARD:
-            dialog.destroy()
-            return
-
-        #~ start, end = dialog.buffer.get_bounds()
-        search_string = search_text.get_text()
-
-        #~ print "Searching for `%s'\n" % search_string
-
-        self.search(search_string)
-
-        dialog.destroy()
         
     def edit_find_next(self, mi):
         self.search(self.search_string, self.last_search_iter)

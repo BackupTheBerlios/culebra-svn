@@ -295,14 +295,14 @@ class PyGTKDb(gtk.Window, bdb.Bdb):
         self.stackdisp.get_selection().select_path(curindex)
         return
     def update_var_listing(self):
-        model = self.vardisp.get_model()
+        model = gtk.TreeStore(str, str, str)
         model.clear()
         locals = self.curframe.f_locals
         self.vardisp.varnames = locals.keys()
         self.vardisp.varnames.sort()
         for var in self.vardisp.varnames:
             row = [var, type(locals[var]).__name__, repr.repr(locals[var])]
-            model.append(row)
+            model.append(None, row)
         self.vardisp.get_selection().select_path(0)
         return
     def update_code_listing(self):
