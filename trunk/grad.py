@@ -8,6 +8,7 @@ import gtk
 import sys, os, dialogs
 import gtkcons, gtkdb, browse
 import pyclbr, rlcompleter, readline, string, py_compile, traceback
+from refactor import refactoring
 
 import gtksourceview
 import pango
@@ -47,6 +48,7 @@ class EditWindow(gtk.Window):
 
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
+        self.refactor = refactoring.Refactor(self)
         self.wins = {}
         self.current_word = ""
         self.wl = []
@@ -606,6 +608,16 @@ class EditWindow(gtk.Window):
                 <menu name='View' action='View'>
                         <menuitem action='ViewConsole'/>
                 </menu>
+                <menu name='Refactor' action='Refactor'>
+                        <menuitem action='FindReference'/>
+                        <menuitem action='FindDefinition'/>
+                        <separator/>
+                        <menuitem action='Rename'/>
+                        <menuitem action='ExtractMethod'/>
+                        <menuitem action='ExtractLocalVariable'/>
+                        <menuitem action='InlineLocalVariable'/>
+                        <menuitem action='UndoLastRefactoring'/>
+                </menu>
                 <menu name='Run' action='Run'>
                         <menuitem action='Execute'/>
                         <menuitem action='ClearConsole'/>
@@ -647,6 +659,15 @@ class EditWindow(gtk.Window):
              self.edit_find_next),
             ('View', None, "_View"),
             ('ViewConsole', None, '_View Console', None, None, self.view_console),
+            ('Refactor', None, "_Refactor"),
+            ('FindReference', None, 'Find _Reference', None, None,
+             self.refactor.on_find_ref_activated),
+            ('FindDefinition', None, 'Find _Definition', None, None, lambda t: 1),
+            ('Rename', None, 'Re_name', None, None, lambda t: 1),
+            ('ExtractMethod', None, 'Extract _Method', None, None, lambda t: 1),
+            ('ExtractLocalVariable', None, '_Extract Local Variable', None, None, lambda t: 1),
+            ('InlineLocalVariable', None, '_Inline Local Variable', None, None, lambda t: 1),
+            ('UndoLastRefactoring', None, '_Undo Last Refactoring', None, None, lambda t: 1),
             ('Run', None, "_Run"),
             ('Execute', gtk.STOCK_EXECUTE, None, "F5", None, self.run_script),
             ('ClearConsole', gtk.STOCK_CLEAR, 'Clear _Console', None, None, self.clear_console),
