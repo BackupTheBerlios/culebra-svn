@@ -1,0 +1,16 @@
+Gnome Rapid Apps Development
+
+This is a very first snapshot of the project, is based on examples 
+from pygtk and idle-python source code.
+
+You need python-gnome2-extras to run this code
+
+$python grad.py
+
+TODO
+
+Finish dialogs
+Multitabs documents
+Enhanced Class Browser
+Autocomplete
+Project Manager
