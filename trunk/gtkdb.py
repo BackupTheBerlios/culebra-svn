@@ -317,7 +317,7 @@ class PyGTKDb(gtk.Window, bdb.Bdb):
             
             s = "".join(lines)
             buffer.set_text(s)
-            print lines
+            
             breaks = self.get_file_breaks(newfile)
             #~ for line in range(len(lines)):
                 #~ if line+1 in breaks:
@@ -443,9 +443,9 @@ def pm():
 if __name__ == '__main__':
     import os
     if not sys.argv[1:]:
-        #print "usage: gtkdb.py scriptfile [args ...]"
-        #sys.exit(2)
-        filename = "test.py"
+        print "usage: gtkdb.py scriptfile [args ...]"
+        sys.exit(2)
+        
     else:
     	filename = sys.argv[1]
     del sys.argv[0] # delete gtkdb.py

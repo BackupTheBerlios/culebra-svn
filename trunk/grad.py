@@ -583,6 +583,10 @@ class EditWindow(gtk.Window):
         self.console_hid = self.console.buffer.connect('mark_set', self.console_move_cursor_cb)
         #traceback.print_stack(file=out)
         return
+        
+    def debug_script(self, action):
+        filename, buffer, text, model = self.get_current()
+        gtkdb.run('execfile("' + filename + '")', {'__name__': '__main__'})
 
     def create_menu(self):
         ui_string = """<ui>
@@ -620,6 +624,7 @@ class EditWindow(gtk.Window):
                 </menu>
                 <menu name='Run' action='Run'>
                         <menuitem action='Execute'/>
+                        <menuitem action='Debug'/>
                         <menuitem action='ClearConsole'/>
                 </menu>
         </menubar>
@@ -670,6 +675,7 @@ class EditWindow(gtk.Window):
             ('UndoLastRefactoring', None, '_Undo Last Refactoring', None, None, lambda t: 1),
             ('Run', None, "_Run"),
             ('Execute', gtk.STOCK_EXECUTE, None, "F5", None, self.run_script),
+            ('Debug', None, "_Debug", "F4", None, self.debug_script),
             ('ClearConsole', gtk.STOCK_CLEAR, 'Clear _Console', None, None, self.clear_console),
             ]
         self.ag = gtk.ActionGroup('edit')
@@ -882,76 +888,6 @@ class EditWindow(gtk.Window):
         response_id = dialog.run()
         
     def edit_find_next(self, mi):
-        self.search(self.search_string, self.last_search_iter)
+        self._search(self.search_string, self.last_search_iter)
     
-    def help_about(self, mi):
-        dlg = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT,
-                                gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
-                                """Copyright (C)
-                                2005 Fernando San Martín Woerner
-                                
-                                This program is covered by the GPL>=2""")
-        dlg.run()
-        dlg.hide()
-        return
-
-class AutoCompletionWindow(gtk.Window):
-    
-    def __init__(self, wl = [], tv = None, iter = None):
-        
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
-        
-        self.set_decorated(False)
-        
-        store = gtk.ListStore(str, str)
-        
-        for i in wl:
-            store.append([i, gtk.STOCK_CONVERT])
-            
-        self.tree = gtk.TreeView(store)
-        
-        col = gtk.TreeViewColumn()
-        
-        cellpb = gtk.CellRendererPixbuf()
-        cell = gtk.CellRendererText()
-        column = gtk.TreeViewColumn('Class Browser')
-        column.set_clickable(True)
-        column.pack_start(cellpb, False)
-        column.pack_start(cell, True)
-
-        column.set_attributes(cellpb, stock_id=1)
-        column.set_attributes(cell, text=0)
-
-        self.tree.append_column(column)
-        
-        rect = tv.get_iter_location(iter)
-        wx, wy = tv.buffer_to_window_coords(gtk.TEXT_WINDOW_WIDGET, rect.x, rect.y + rect.height)
-        tx, ty = gtk.gdk.Window.get_origin(self)
-        self.move(wx+tx, wy+ty)
-        self.show_all()
-        self.tree.grab_focus()
-
-
-def edit(fname, mainwin=False):
-    if mainwin: quit_cb = lambda w: gtk.main_quit()
-    else:       quit_cb = None
-    w = EditWindow(quit_cb=quit_cb)
-    if fname != "":
-        w.file_new()
-    w.maximize()
-    w.show()
-    w.set_size_request(0,0)
-
-    w.dirname = os.getcwd()
-
-    if mainwin: gtk.main()
-    return
-
-if __name__ == '__main__':
-    import sys
-
-    if len(sys.argv) > 1:
-        fname = sys.argv[-1]
-    else:
-        fname = ""
-    edit(fname, mainwin=True)
+ 
