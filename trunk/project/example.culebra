@@ -1,0 +1,7 @@
+<culebra name="My Test Project">
+	<files>
+		<item name="archivo1.py" type="pyfile"/>
+		<item name="archivo2.py" type="pyfile"/>
+		<item name="gui.glade" type="glade"/>
+	</files>
+</culebra>
