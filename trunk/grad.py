@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+﻿#!/usr/bin/env python
 
-# This is based on pygt2 examples and idle
+# This is based on pygtk2 examples and idle
 
 import pygtk
 pygtk.require('2.0')
@@ -16,8 +16,9 @@ import words
 
 BLOCK_SIZE = 2048
 
-newcode = """import gtk
+newcode = """import pygtk
 pygtk.require('2.0')
+import gtk
 
 
 class Window1(gtk.Window):
@@ -32,9 +33,7 @@ if __name__ == "__main__":
     
     w = Window1()
     w.show_all()
-    gtk.main()
-    
-"""
+    gtk.main()"""
 
 special_chars = (" ", "\n", ".", ":", ",", "'", 
                 '"', "(", ")", "{", "}", "[", "]")
@@ -43,32 +42,51 @@ class EditWindow(gtk.Window):
 
     def __init__(self, quit_cb=None):
 
-
         gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
 
         self.wins = {}
         self.current_word = ""
+        self.wl = []
 
-        self.vpaned = gtk.VPaned()
-        
         self.set_size_request(470, 300)
         self.connect("delete_event", self.file_exit)
+
         self.quit_cb = quit_cb
         self.vbox = gtk.VBox()
-        self.add(self.vpaned)
-        self.vpaned.show()
-        self.vpaned.add1(self.vbox)
+        
+        self.add(self.vbox)
         self.vbox.show()
+
+        self.menubar, self.toolbar = self.create_menu()
+
+        hdlbox = gtk.HandleBox()
+
+        self.vbox.pack_start(hdlbox, expand=False)
+        hdlbox.show()
+        
+        hdlbox.add(self.menubar)
+        self.menubar.show()
+        
         hdlbox = gtk.HandleBox()
         self.vbox.pack_start(hdlbox, expand=False)
         hdlbox.show()
-        self.menubar, self.toolbar = self.create_menu()
-        hdlbox.add(self.menubar)
-        self.menubar.show()
-        self.vbox.pack_start(self.toolbar, expand=False)
+        
+        hdlbox.add(self.toolbar)
+        self.toolbar.show()
 
+        self.vpaned = gtk.VPaned()
+        
+        self.vbox.pack_start(self.vpaned, expand=True, fill = True)
+        self.vpaned.show()
+        
+        self.vbox1 = gtk.VBox()
+        self.vpaned.add1(self.vbox1)
+        self.vbox.show()
+        
+        self.vbox1.show()
+        
         self.hpaned = gtk.HPaned()
-        self.vbox.pack_start(self.hpaned, True, True)
+        self.vbox1.pack_start(self.hpaned, True, True)
         self.hpaned.set_border_width(5)
         self.hpaned.show()
 
@@ -105,9 +123,18 @@ class EditWindow(gtk.Window):
         self.notebook.set_show_tabs(True)
         self.notebook.set_scrollable(True)
         self.hpaned.add2(self.notebook)
+        self.hpaned.set_position(200)
 
         self.notebook.show()
-        self.notebook.connect('switch-page', self.switch_page_cb)
+        self.notebook.connect('switch-page', self.switch_page_cb)        
+        
+        self.console = gtkcons.Console(namespace={'__builtins__': __builtins__, '__name__': '__main__',
+                '__doc__': None}, copyright='')
+        self.console.show()
+        self.console.init()
+        self.console_hid = self.console.buffer.connect('mark_set', self.console_move_cursor_cb)
+
+        self.vpaned.add2(self.console)
 
         hbox = gtk.HBox()
 
@@ -119,14 +146,8 @@ class EditWindow(gtk.Window):
         hbox.pack_start(self.pos_label, False, False)
         self.pos_label.show()
 
-        self.console = gtkcons.Console(namespace={'__builtins__': __builtins__, '__name__': '__main__',
-                '__doc__': None}, copyright='')
-        self.console.show()
-        self.console.init()
-        self.console_hid = self.console.buffer.connect('mark_set', self.console_move_cursor_cb)
-
-        self.vpaned.add2(self.console)
-        self.vpaned.set_position(700)
+        
+        self.vpaned.set_position(900)
 
         
         self.complete = 0
@@ -225,7 +246,7 @@ class EditWindow(gtk.Window):
 
             text.set_auto_indent(True)
             text.set_show_line_numbers(True)
-            text.set_show_line_markers(True)
+            #~ text.set_show_line_markers(True)
             #text.set_tabs_width(4)
             #~ text.connect("grab-focus", self.grab_focus_cb)
             text.connect('delete-from-cursor', self.delete_from_cursor_cb)
@@ -255,7 +276,7 @@ class EditWindow(gtk.Window):
     def tree_row_activated(self, tree, row, column):
 
         name, buffer, text, model = self.get_current()
-        lineno = model[row][2]
+        lineno = model[row][2] - 1
 
         iter = buffer.get_iter_at_line(lineno)
 
@@ -299,15 +320,7 @@ class EditWindow(gtk.Window):
         
         for i in special_chars:
             text = text.replace(i, " ")
-        
-        #~ text = text.replace("\n", " ")
-        #~ text = text.replace(".", " ")
-        #~ text = text.replace(",", " ")
-        #~ text = text.replace("(", " ")
-        #~ text = text.replace(")", " ")
-        #~ text = text.replace(":", " ")
-        #~ text = text.replace("=", " ")
-        
+
         self.wl = words.text_wordlist(text)
 
     def console_move_cursor_cb(self, buffer, cursoriter, mark, view=None):
@@ -352,6 +365,7 @@ class EditWindow(gtk.Window):
 
     def insert_at_cursor_cb(self, textbuffer, iter, text, length):
         
+        return 
         if text in special_chars:
             self.current_word = ""
         else:
@@ -359,8 +373,12 @@ class EditWindow(gtk.Window):
         
         if len(text) == 1: 
             if ord(text) == 9: self.current_word = ""
-                
-        print self.current_word
+        
+        name, buff, t_v, model = self.get_current()
+
+        
+        if len(self.wl):
+            w = AutoCompletionWindow(self.wl, t_v, iter)
         return
         
     def delete_from_cursor_cb (self, textview, delete_type, count):
@@ -801,6 +819,43 @@ class EditWindow(gtk.Window):
         dlg.run()
         dlg.hide()
         return
+
+class AutoCompletionWindow(gtk.Window):
+    
+    def __init__(self, wl = [], tv = None, iter = None):
+        
+        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+        
+        self.set_decorated(False)
+        
+        store = gtk.ListStore(str, str)
+        
+        for i in wl:
+            store.append([i, gtk.STOCK_CONVERT])
+            
+        self.tree = gtk.TreeView(store)
+        
+        col = gtk.TreeViewColumn()
+        
+        cellpb = gtk.CellRendererPixbuf()
+        cell = gtk.CellRendererText()
+        column = gtk.TreeViewColumn('Class Browser')
+        column.set_clickable(True)
+        column.pack_start(cellpb, False)
+        column.pack_start(cell, True)
+
+        column.set_attributes(cellpb, stock_id=1)
+        column.set_attributes(cell, text=0)
+
+        self.tree.append_column(column)
+        
+        rect = tv.get_iter_location(iter)
+        wx, wy = tv.buffer_to_window_coords(gtk.TEXT_WINDOW_WIDGET, rect.x, rect.y + rect.height)
+        tx, ty = gtk.gdk.Window.get_origin(self)
+        self.move(wx+tx, wy+ty)
+        self.show_all()
+        self.tree.grab_focus()
+
 
 def edit(fname, mainwin=False):
     if mainwin: quit_cb = lambda w: gtk.main_quit()

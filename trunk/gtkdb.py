@@ -176,12 +176,12 @@ class PyGTKDb(gtk.Window, bdb.Bdb):
     def add_stock_ids(self):
     
     	self.iconfactory = gtk.IconFactory()
-    	
-    	iconset = gtk.IconSet(gtk.gdk.pixbuf_new_from_file(name+'.xpm'))
+
+        iconset = gtk.IconSet(gtk.gdk.pixbuf_new_from_file(name+'.xpm'))
         self.iconfactory.add('pyide-'+name, iconset)
+
         self.iconfactory.add_default()
-    	
-    	
+        
         ids = [
             ('pyide-next', '_Next', gtk.gdk.CONTROL_MASK, gtk.keysyms.N,
              'pyide'),
