@@ -890,4 +890,37 @@ class EditWindow(gtk.Window):
     def edit_find_next(self, mi):
         self._search(self.search_string, self.last_search_iter)
     
- 
+    def help_about(self, mi):
+        dlg = gtk.MessageDialog(self, gtk.DIALOG_DESTROY_WITH_PARENT,
+                                gtk.MESSAGE_INFO, gtk.BUTTONS_OK,
+                                """Copyright (C)
+                                2005 Fernando San Martín Woerner
+                                
+                                This program is covered by the GPL>=2""")
+        dlg.run()
+        dlg.hide()
+        return
+
+def edit(fname, mainwin=False):
+    if mainwin: quit_cb = lambda w: gtk.main_quit()
+    else:       quit_cb = None
+    w = EditWindow(quit_cb=quit_cb)
+    if fname != "":
+        w.file_new()
+    w.maximize()
+    w.show()
+    w.set_size_request(0,0)
+
+    w.dirname = os.getcwd()
+
+    if mainwin: gtk.main()
+    return
+
+if __name__ == '__main__':
+    import sys
+
+    if len(sys.argv) > 1:
+        fname = sys.argv[-1]
+    else:
+        fname = ""
+    edit(fname, mainwin=True)
