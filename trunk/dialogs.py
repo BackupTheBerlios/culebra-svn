@@ -38,7 +38,7 @@ def OpenFile(title, parent=None, dirname=None, fname=None, mask = None):
     filter.add_mime_type("text/x-python")
 
     if not mask is None:
-        filter.add_patern(mask)
+        filter.add_pattern(mask)
 
     dlg.set_filter(filter)
     dlg.set_local_only(True)

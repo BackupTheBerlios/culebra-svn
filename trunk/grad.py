@@ -84,6 +84,7 @@ class EditWindow(gtk.Window):
         self.scrolledwin1.add(self.treeClass)
         self.treeClass.show()
         self.treeClass.connect("row-activated", self.tree_row_activated)
+        self.treeClass.connect("button_press_event", self.tree_right_clicked)
 
         cellpb = gtk.CellRendererPixbuf()
         cell = gtk.CellRendererText()
@@ -135,9 +136,30 @@ class EditWindow(gtk.Window):
 
         self.clipboard = gtk.Clipboard(selection='CLIPBOARD')
         self.dirname = "."
-        
-        return
 
+        self.browser_menu = gtk.Menu()
+        refresh_item = gtk.MenuItem("Refresh")
+        self.browser_menu.append(refresh_item)
+        refresh_item.show()
+        refresh_item.connect("activate", self.refresh_browser)
+        return
+    
+    def refresh_browser(self, item):
+        name, buffer, text, model = self.get_current()
+        
+        buffer.place_cursor(buffer.get_start_iter())
+        model = self.listclasses(fname=name)
+        self.treeClass.set_model(model)
+        self.treeClass.expand_all()
+        self.wins[name] = buffer, text, model
+        pass
+    
+    def tree_right_clicked(self, tree, event):
+        if event.button == 3:
+            self.browser_menu.show()
+            self.browser_menu.popup(None, None, None, event.button, event.time)
+            return
+   
     def switch_page_cb(self, notebook, page, pagenum):
 
         f, b, text, model  = self.get_current(pagenum)
@@ -498,7 +520,7 @@ class EditWindow(gtk.Window):
 
         buffer.place_cursor(buffer.get_start_iter())
 
-        model = self.listclasses(fname)
+        model = self.listclasses(fname=fname)
         #~ self.treeClass.set_model(model)
         #~ self.treeClass.expand_all()
         buffer.set_data("save", False)
@@ -662,7 +684,7 @@ class EditWindow(gtk.Window):
 
     def file_open(self, mi=None):
 
-        fname = dialogs.OpenFile('Open File', self, None, None)
+        fname = dialogs.OpenFile('Open File', self, None, None, "*")
         if not fname: return
         self.load_file(fname)
         return
